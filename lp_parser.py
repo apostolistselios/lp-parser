@@ -1,13 +1,12 @@
 import re
 import os
-import numpy as np
 
 # REGULAR EXPRESSIONS
 minmax_regex = re.compile('\A(min|max)', re.I)
 objective_function_regex = re.compile(
     '(max|min)([\-|\+]?\d*x\d+)([\-|\+]{1}\d*x\d+)+$', re.I)
 subject_to_regex = re.compile(
-    '(st|s.t.|subjectto)([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
+    '(st|s\.t\.|subjectto)([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
 tech_contraints_regex = re.compile(
     '([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
 
@@ -38,31 +37,20 @@ def check_format(data):
     """
 
     try:
-        if minmax_regex.match(data[0]):
-            lp_type = minmax_regex.match(data[0]).group()
-            print(lp_type)
-        else:
+        if not minmax_regex.match(data[0]):
             raise Exception(
                 'ERROR: Linear Problem type is not valid.\nTry adding min/max in front of the objective function.')
 
-        if objective_function_regex.match(data[0]):
-            obj_fun = objective_function_regex.match(data[0]).group()
-            print(obj_fun)
-        else:
+        if not objective_function_regex.match(data[0]):
             raise Exception(
                 'ERROR: Objective function is not valid\nTry this form: max 3x1 + 3x2')
 
-        if subject_to_regex.match(data[1]):
-            st = subject_to_regex.match(data[1]).group()
-            print(st)
-        else:
+        if not subject_to_regex.match(data[1]):
             raise Exception(
                 'ERROR: Subject to keyword is not valid\nTry this form: subject to/s.t./st 3x1 + 3x2 >= 2')
 
         for constraint in data[2:]:
-            if tech_contraints_regex.match(constraint):
-                print(constraint)
-            else:
+            if not tech_contraints_regex.match(constraint):
                 raise Exception(
                     f'ERROR: Constraint -> "{constraint}" is not valid\nTry this form: 3x1 + 3x2 >= 2')
 
@@ -71,41 +59,80 @@ def check_format(data):
         exit(1)
 
 
-def extract_obj_fun_factors(objective_function):
-    print(objective_function)
+def get_lp_type(obj_fun):
+    """ Return minmax
 
+    Min max represents the type of the linear problem.
+    -1 for min / 1 for max
+    """
 
-def main():
-    os.system('cls' if os.name == 'nt' else 'clear')    # clears the terminal
-
-    # # matrix factors of the constraints
-    # A = np.empty((m, n), dtype=np.int32)
-    #
-    # # right hand side of the constraints
-    # b = np.empty((1, m), dtype=np.int32)
-    #
-    # # factors of the objective function
-    # c = np.empty((1, n), dtype=np.int32)
-    #
-    # # constraints:-1 (<=), 1 (>=), 0 (=)
-    # Eqin = np.empty((1, m), dtype=np.int8)
-
-    data = load_data()
-    check_format(data)
-
-    n = 0   # x variables
-    m = 0   # technological constraints
-    minmax = 0  # 1 -> maximize lp / -1 -> minimize lp
-
-    match = minmax_regex.match(data[0])
+    match = minmax_regex.match(obj_fun)
     if match.group() == 'min':
         minmax = -1
     else:
         minmax = 1
 
-    print(minmax)
+    return minmax
+
+
+def extract_obj_fun_factors(obj_fun):
+    """ Return factors
+
+    Extract the factors of the x variables from the objective function.
+    """
+
+    factors = []
+    i = 0
+
+    # Iterate char by char the objective function.
+    for char in obj_fun:
+
+        # If the char is not in the following list.
+        if char not in ['+', '-', 'x']:
+
+            # If the previous char is equal to '-' concat it with the current char.
+            if obj_fun[i - 1] == '-':
+                factors.append('-' + char)
+
+            # Else if the previous char is not equal to 'x' it will be equal
+            # to '+' so we don't have to concat sth to the factor.
+            elif not obj_fun[i - 1] == 'x':
+                factors.append(char)
+
+            # Else if the previous char is equal to 'x' the current char
+            # is a number after the 'x'.
+            elif obj_fun[i - 1] == 'x':
+                # If two positions back is either a '-' or a '+' this means
+                # that the factor of that x variable is either '-1' or '1'.
+                if obj_fun[i - 2] == '-':
+                    factors.append('-1')
+                elif obj_fun[i - 2] == '+':
+                    factors.append('1')
+
+        # Else if its the first char and is not '-'.
+        elif i == 0 and not obj_fun[i] == '-':
+            factors.append('1')
+
+        i += 1
+
+    return factors
+
+
+def main():
+    os.system('cls' if os.name == 'nt' else 'clear')  # clears the terminal
+
+    minmax = 0  # 1 -> maximize lp / -1 -> minimize lp
+    A = []  # matrix factors of the constraints
+    b = []  # right hand side of the constraints
+    c = []  # factors of the objective function
+    Eqin = []  # constraints:-1 (<=), 1 (>=), 0 (=)
+
+    data = load_data()
+    check_format(data)
+    minmax = get_lp_type(data[0])
 
     c = extract_obj_fun_factors(data[0][3:])
+    print(c)
 
 
 if __name__ == '__main__':
