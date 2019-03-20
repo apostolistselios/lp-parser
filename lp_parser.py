@@ -2,13 +2,13 @@ import re
 import os
 
 # REGULAR EXPRESSIONS
-minmax_regex = re.compile('\A(min|max)', re.I)
+minmax_regex = re.compile(r'\A(min|max)', re.I)
 objective_function_regex = re.compile(
-    '(max|min)([\-|\+]?\d*x\d+)([\-|\+]{1}\d*x\d+)+$', re.I)
+    r'(max|min)([\-|\+]?\d*x\d+)([\-|\+]{1}\d*x\d+)+$', re.I)
 subject_to_regex = re.compile(
-    '(st|s\.t\.|subjectto)([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
+    r'(st|s\.t\.|subjectto)([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
 tech_contraints_regex = re.compile(
-    '([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
+    r'([\-|\+]?\d*x\d+)(([\-|\+]{1}\d*x\d+)+)((>=)|(<=)|(=))(\d+)$', re.I)
 
 
 def load_data():
@@ -75,45 +75,41 @@ def get_lp_type(obj_fun):
     return minmax
 
 
-def extract_obj_fun_factors(obj_fun):
+def extract_factors(linear_eq):
     """ Return factors
 
-    Extract the factors of the x variables from the objective function.
+    Extract the factors of the x variables from a right hand side
+    of a linear equation.
     """
 
+    # A list with each x, its factor and its pointer e.g. -23x1
+    x_vars = re.findall(r'([\-|\+]?\d*x\d+)', linear_eq)
+    print('x:', x_vars)
+
     factors = []
-    i = 0
 
-    # Iterate char by char the objective function.
-    for char in obj_fun:
+    # Iterate element of x_vars.
+    for element in x_vars:
+        # Partition each element at 'x'. It return 3 values the
+        # factor, x, and its pointer. I keep the factor the other
+        # two values are not needed.
+        factor, *not_needed = element.partition('x')
 
-        # If the char is not in the following list.
-        if char not in ['+', '-', 'x']:
-
-            # If the previous char is equal to '-' concat it with the current char.
-            if obj_fun[i - 1] == '-':
-                factors.append('-' + char)
-
-            # Else if the previous char is not equal to 'x' it will be equal
-            # to '+' so we don't have to concat sth to the factor.
-            elif not obj_fun[i - 1] == 'x':
-                factors.append(char)
-
-            # Else if the previous char is equal to 'x' the current char
-            # is a number after the 'x'.
-            elif obj_fun[i - 1] == 'x':
-                # If two positions back is either a '-' or a '+' this means
-                # that the factor of that x variable is either '-1' or '1'.
-                if obj_fun[i - 2] == '-':
-                    factors.append('-1')
-                elif obj_fun[i - 2] == '+':
-                    factors.append('1')
-
-        # Else if its the first char and is not '-'.
-        elif i == 0 and not obj_fun[i] == '-':
+        # If the factor is a number with a '+' strip the '+' and append it.
+        if re.match(r'\+\d*', factor):
+            factors.append(factor.strip('+'))
+        # Else if the factor is '+' or an empty string the factor is 1.
+        elif factor in ['+', '']:
             factors.append('1')
-
-        i += 1
+        # Else if the factor is '-0' append 0.
+        elif factor == '-0':
+            factors.append('0')
+        # Else if the factor is '-' the factor is -1.
+        elif factor == '-':
+            factors.append('-1')
+        # Else the factor is a negative number apart from -1.
+        else:
+            factors.append(factor)
 
     return factors
 
@@ -131,7 +127,7 @@ def main():
     check_format(data)
     minmax = get_lp_type(data[0])
 
-    c = extract_obj_fun_factors(data[0][3:])
+    c = extract_factors(data[0][3:])
     print(c)
 
 
