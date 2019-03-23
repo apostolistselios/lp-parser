@@ -1,3 +1,9 @@
+'''
+Created on Mar 12, 2019
+
+@author: Apostolis Tselios
+'''
+
 import re
 import os
 
@@ -18,7 +24,7 @@ def load_linear_problem():
     """
 
     data = []
-    with open('lp.txt', 'r') as input_file:
+    with open(r'.\txt_files\lp.txt', 'r') as input_file:
         raw_data = input_file.readlines()
         for line in raw_data:
             if line != '\n':
@@ -186,8 +192,29 @@ def extract_bconstants(constraints):
     return b
 
 
-def save_matrixes():
-    pass
+def save_matrixes_to_file(minmax, c, A, b, eqin):
+    """
+    Save the extracted matrixes to a file called lp_matrixes.txt.
+    """
+
+    print(r'Saving to .\files\lp_matrixes.txt ...')
+
+    with open(r'.\txt_files\lp_matrixes.txt', 'w') as output_file:
+        if minmax == 1:
+            output_file.write('max ')
+        else:
+            output_file.write('min ')
+
+        print('c =', c, file=output_file)
+        i = 0
+        print('A =', A[i], file=output_file)
+        for i in range(1, len(A)):
+            print(f'\t{A[i]}', file=output_file)
+
+        print('eqin =', eqin, file=output_file)
+        print('b =', b, file=output_file)
+
+    print('Done!')
 
 
 def main():
@@ -201,6 +228,7 @@ def main():
 
     data = load_linear_problem()
     check_format(data)
+    print('Extracting...')
     minmax = get_lp_type(data[0])
 
     c = extract_factors(data[0][3:])
@@ -215,10 +243,7 @@ def main():
     Eqin = extract_constraints(data[1:])
     b = extract_bconstants(data[1:])
 
-    print('c = ', c)
-    print('A = ', A)
-    print('Eqin = ', Eqin)
-    print('b = ', b)
+    save_matrixes_to_file(minmax, c, A, b, Eqin)
 
 
 if __name__ == '__main__':
