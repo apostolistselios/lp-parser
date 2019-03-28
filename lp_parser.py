@@ -118,6 +118,32 @@ def get_st_len(st_line):
         return len(match.group())
 
 
+def filter_nones(matrix):
+    """ Return matrix
+
+    Replaces the None elements of an list with 0s.
+    """
+
+    for i, element in enumerate(matrix):
+        if element == None:
+            matrix[i] = 0
+
+    return matrix
+
+
+def initialize_matrix(n):
+    """ Return matrix
+
+    Returns a matrix with n elements of None
+    """
+
+    matrix = []
+    for _ in range(n):
+        matrix.append(None)
+
+    return matrix
+
+
 def extract_factors(linear_eq, n):
     """ Return factors
 
@@ -125,35 +151,10 @@ def extract_factors(linear_eq, n):
     of a linear equation.
     """
 
-    def initialize_matrix(n):
-        """ Return matrix
-
-        Returns a matrix with n elements of None
-        """
-
-        matrix = []
-        for _ in range(n):
-            matrix.append(None)
-
-        return matrix
-
-    def filter_nones(matrix):
-        """ Return matrix
-
-        Replaces the None elements of an list with 0s.
-        """
-
-        for i, element in enumerate(matrix):
-            if element == None:
-                matrix[i] = 0
-
-        return matrix
-
     # A list with tuples containing the sign and factor of each x.
     # e.g. [('', '23.1'), ('-', '0'), ('+', '23'), ('-', '10')]
     x_factors = re.findall(r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)', linear_eq)
     factors = initialize_matrix(n)
-    print(x_factors)
 
     # Iterate every tuple in x_factors.
     for factor in x_factors:
@@ -190,7 +191,7 @@ def extract_factors(linear_eq, n):
             except ValueError:
                 factors[pointer - 1] = float(value)
 
-    print('factors factors:', filter_nones(factors))
+    print('filtered factors:', filter_nones(factors))
     return filter_nones(factors)
 
 
