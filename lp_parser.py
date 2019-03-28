@@ -69,6 +69,25 @@ def check_format(data):
         exit(1)
 
 
+def get_n(data):
+    """ Return max_pointer
+
+    Finds and returns the number of x variables in the linear problem.
+    """
+
+    max_pointer = 0
+
+    for line in data:
+        x_factors = re.findall(r'x\d+', line)
+        print(x_factors)
+        for factor in x_factors:
+            pointer = factor.strip('x')
+            if int(pointer) > max_pointer:
+                max_pointer = int(pointer)
+
+    return max_pointer
+
+
 def get_lp_type(obj_fun):
     """ Return 1 or -1
 
@@ -99,53 +118,80 @@ def get_st_len(st_line):
         return len(match.group())
 
 
-def extract_factors(linear_eq):
+def extract_factors(linear_eq, n):
     """ Return factors
 
     Extracts the factors of the x variables from a right hand side
     of a linear equation.
     """
 
+    def initialize_matrix(n):
+        """ Return matrix
+
+        Returns a matrix with n elements of None
+        """
+
+        matrix = []
+        for _ in range(n):
+            matrix.append(None)
+
+        return matrix
+
+    def filter_nones(matrix):
+        """ Return matrix
+
+        Replaces the None elements of an list with 0s.
+        """
+
+        for i, element in enumerate(matrix):
+            if element == None:
+                matrix[i] = 0
+
+        return matrix
+
     # A list with tuples containing the sign and factor of each x.
     # e.g. [('', '23.1'), ('-', '0'), ('+', '23'), ('-', '10')]
-    x_factors = re.findall(r'(\-|\+)?(\d+|\d+\.\d+)?x\d+', linear_eq)
-    factors = []
+    x_factors = re.findall(r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)', linear_eq)
+    factors = initialize_matrix(n)
+    print(x_factors)
 
     # Iterate every tuple in x_factors.
     for factor in x_factors:
-        # Unpack its sign and its value.
-        sign, value = factor
+        # Unpack its sign, its value and its pointer.
+        sign, value, str_pointer = factor
+        pointer = int(str_pointer)
+
         # If there is no sign and no value or there is a '+' sign and no value
         # the factor is 1.
         if (sign == '' and value == '') or (sign == '+' and value == ''):
-            factors.append(1)
+            factors[pointer - 1] = 1
         # Else if there is a '-' sign and no value the factor is -1.
         elif sign == '-' and value == '':
-            factors.append(-1)
+            factors[pointer - 1] = -1
         # Else if there is no sign or the sign is '-' and the value is '0'
         # The factor is the value.
-        elif (sign == '' and value != '') or (sign == '-' and value == '0'):
+        elif sign == '' and value != '':
             # Try casting to an int. If ValueError cast to a float.
             try:
-                factors.append(int(value))
+                factors[pointer - 1] = int(value)
             except ValueError:
-                factors.append(float(value))
+                factors[pointer - 1] = float(value)
         # Else if there is a '-' sign and some value the factor is negative.
         elif sign == '-' and value != '':
             # Try casting to an int. If ValueError cast to a float.
             try:
-                factors.append(int(sign + value))
+                factors[pointer - 1] = int(sign + value)
             except ValueError:
-                factors.append(float(sign + value))
+                factors[pointer - 1] = float(sign + value)
         else:
             # Try casting to an int. If ValueError cast to a float.
             try:
-                factors.append(int(value))
+                factors[pointer - 1] = int(value)
             except ValueError:
-                factors.append(float(value))
+                factors[pointer - 1] = float(value)
 
-    print('factors:', factors)
-    return factors
+    print('factors factors:', filter_nones(factors))
+    return filter_nones(factors)
 
 
 def extract_constraints(constraints):
@@ -228,17 +274,20 @@ def main():
 
     data = load_linear_problem()
     check_format(data)
+
+    n = get_n(data)
+
     print('Extracting...')
     minmax = get_lp_type(data[0])
 
-    c = extract_factors(data[0][3:])
+    c = extract_factors(data[0][3:], n)
 
     for constraint in data[1:]:
         if st_regex.match(constraint):
             st_len = get_st_len(constraint)
-            A.append(extract_factors(constraint[st_len:]))
+            A.append(extract_factors(constraint[st_len:], n))
         else:
-            A.append(extract_factors(constraint))
+            A.append(extract_factors(constraint, n))
 
     Eqin = extract_constraints(data[1:])
     b = extract_bconstants(data[1:])

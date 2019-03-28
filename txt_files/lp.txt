@@ -1,5 +1,5 @@
-min 3x1 +x2+x3+x4
-subject to x1 +x2 +x3 + 0x4= -10
-0x1 + 5.15x2 + x3 - 0x4 >= 5
-0x1 + x2 + 0x3 + 0x4<= 1
-x1 -0x2 - 2x3 +0x4        = 6
+min 3x1 +x2+x4+x6
+subject to x1 +x2 +x3 + x4= -10
+5.15x2 - x4 >= 5
+x1 + x3 + x4<= 1
+x1 - 2x3 +x4        = 6
