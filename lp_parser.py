@@ -6,6 +6,8 @@ Created on Mar 12, 2019
 
 import re
 import os
+import argparse
+
 
 # REGULAR EXPRESSIONS
 minmax_regex = re.compile(r'\A(min|max)', re.I)
@@ -13,10 +15,23 @@ objective_function_regex = re.compile(
     r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+$', re.I)
 st_regex = re.compile(r'\A(st|s\.t\.|subjectto)', re.I)
 tech_contraints_regex = re.compile(
-    r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+(>=|<=|=)\-?\d+$', re.I)
+    r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+(>=|<=|=)\-?(\d+|\d+\.\d+)$', re.I)
 
 
-def load_linear_problem():
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description='A script that extracts the matrixes of a linear problem.')
+    parser.add_argument('-i', '--input', type=str,
+                        help='Name of the input file.')
+    parser.add_argument('-o', '--output', type=str,
+                        help='Name of the output file.')
+
+    args = parser.parse_args()
+
+    return args.input, args.output
+
+
+def load_linear_problem(input_file='lp.txt'):
     """ Return data
 
     Loads the linear problem from a file and return its data stripped,
@@ -24,8 +39,8 @@ def load_linear_problem():
     """
 
     data = []
-    with open(r'.\txt_files\lp.txt', 'r') as input_file:
-        raw_data = input_file.readlines()
+    with open(r'.\txt_files\\' + input_file, 'r') as file:
+        raw_data = file.readlines()
         for line in raw_data:
             if line != '\n':
                 data.append(line.strip('\n').replace(' ', '').lower())
@@ -158,14 +173,6 @@ def extract_factors(linear_eq, n):
         # Else if there is a '-' sign and no value the factor is -1.
         elif sign == '-' and value == '':
             factors[pointer - 1] = -1
-        # Else if there is no sign or the sign is '-' and the value is '0'
-        # The factor is the value.
-        elif sign == '' and value != '':
-            # Try casting to an int. If ValueError cast to a float.
-            try:
-                factors[pointer - 1] = int(value)
-            except ValueError:
-                factors[pointer - 1] = float(value)
         # Else if there is a '-' sign and some value the factor is negative.
         elif sign == '-' and value != '':
             # Try casting to an int. If ValueError cast to a float.
@@ -228,27 +235,27 @@ def extract_bconstants(constraints):
     return b
 
 
-def save_matrixes_to_file(minmax, c, A, b, eqin):
+def save_matrixes_to_file(minmax, c, A, b, eqin, output_file='lp_matrixes.txt'):
     """
     Save the extracted matrixes to a file called lp_matrixes.txt.
     """
 
-    print(r'Saving to .\files\lp_matrixes.txt ...')
+    print(r'Saving to .\files\\' + output_file + '...')
 
-    with open(r'.\txt_files\lp_matrixes.txt', 'w') as output_file:
+    with open(r'.\txt_files\\' + output_file, 'w') as file:
         if minmax == 1:
-            output_file.write('max ')
+            file.write('max ')
         else:
-            output_file.write('min ')
+            file.write('min ')
 
-        print('c =', c, file=output_file)
+        print('c =', c, file=file)
         i = 0
-        print('A =', A[i], file=output_file)
+        print('A =', A[i], file=file)
         for i in range(1, len(A)):
-            print(f'\t{A[i]}', file=output_file)
+            print(f'\t{A[i]}', file=file)
 
-        print('eqin =', eqin, file=output_file)
-        print('b =', b, file=output_file)
+        print('eqin =', eqin, file=file)
+        print('b =', b, file=file)
 
     print('Done!')
 
@@ -256,22 +263,29 @@ def save_matrixes_to_file(minmax, c, A, b, eqin):
 def main():
     os.system('cls' if os.name == 'nt' else 'clear')  # clears the terminal
 
-    minmax = 0  # 1 -> maximize lp / -1 -> minimize lp
-    A = []  # matrix factors of the constraints
-    b = []  # right hand side of the constraints
-    c = []  # factors of the objective function
-    Eqin = []  # constraints:-1 (<=), 1 (>=), 0 (=)
+    # Parsing command line arguments.
+    input_file, output_file = parse_arguments()
 
-    data = load_linear_problem()
+    if input_file != None:
+        data = load_linear_problem(input_file)
+    else:
+        data = load_linear_problem()
+
     check_format(data)
 
+    # Number of x variables in the problem
     n = get_n(data)
 
     print('Extracting...')
+
+    # 1 -> maximize lp / -1 -> minimize lp
     minmax = get_lp_type(data[0])
 
+    # c: factors of the objective function
     c = extract_factors(data[0][3:], n)
 
+    # A: matrix with the factors of the constraints
+    A = []
     for constraint in data[1:]:
         if st_regex.match(constraint):
             st_len = get_st_len(constraint)
@@ -279,10 +293,16 @@ def main():
         else:
             A.append(extract_factors(constraint, n))
 
+    # Eqin: constraints:-1 (<=), 1 (>=), 0 (=)
     Eqin = extract_constraints(data[1:])
+
+    # b: right hand side of the constraints
     b = extract_bconstants(data[1:])
 
-    save_matrixes_to_file(minmax, c, A, b, Eqin)
+    if output_file != None:
+        save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
+    else:
+        save_matrixes_to_file(minmax, c, A, b, Eqin)
 
 
 if __name__ == '__main__':
