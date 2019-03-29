@@ -131,19 +131,6 @@ def filter_nones(matrix):
     return matrix
 
 
-def initialize_matrix(n):
-    """ Return matrix
-
-    Returns a matrix with n elements of None
-    """
-
-    matrix = []
-    for _ in range(n):
-        matrix.append(None)
-
-    return matrix
-
-
 def extract_factors(linear_eq, n):
     """ Return factors
 
@@ -154,7 +141,9 @@ def extract_factors(linear_eq, n):
     # A list with tuples containing the sign and factor of each x.
     # e.g. [('', '23.1'), ('-', '0'), ('+', '23'), ('-', '10')]
     x_factors = re.findall(r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)', linear_eq)
-    factors = initialize_matrix(n)
+
+    # Initialize factors with a list with n None elements
+    factors = [None for _ in range(n)]
 
     # Iterate every tuple in x_factors.
     for factor in x_factors:
