@@ -138,19 +138,6 @@ def get_st_len(st_line):
         return len(match.group())
 
 
-def filter_nones(matrix):
-    """ Return matrix
-
-    Replaces the None elements of an list with 0s.
-    """
-
-    for i, element in enumerate(matrix):
-        if element == None:
-            matrix[i] = 0
-
-    return matrix
-
-
 def extract_factors(linear_eq, n):
     """ Return factors
 
@@ -163,7 +150,7 @@ def extract_factors(linear_eq, n):
     x_factors = re.findall(r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)', linear_eq)
 
     # Initialize factors with a list with n None elements
-    factors = [None for _ in range(n)]
+    factors = [0 for _ in range(n)]
 
     # Iterate every tuple in x_factors.
     for factor in x_factors:
@@ -192,8 +179,8 @@ def extract_factors(linear_eq, n):
             except ValueError:
                 factors[pointer - 1] = float(value)
 
-    print('filtered factors:', filter_nones(factors))
-    return filter_nones(factors)
+    print('Factors:', factors)
+    return factors
 
 
 def extract_constraints(constraints):
