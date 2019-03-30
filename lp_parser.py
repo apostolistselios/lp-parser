@@ -19,6 +19,11 @@ tech_contraints_regex = re.compile(
 
 
 def parse_arguments():
+    """ Returns args.input, args.output
+
+    Parses the command line arguments if there are any and returns them.
+    """
+
     parser = argparse.ArgumentParser(
         description='A script that extracts the matrixes of a linear problem.')
     parser.add_argument('-i', '--input', type=str,
@@ -223,14 +228,21 @@ def extract_bconstants(constraints):
 
     # Iterate over the constraints
     for constraint in constraints:
-        match = re.search(r'<=\-?\d+|>=\-?\d+|=\-?\d+', constraint)
+        match = re.search(
+            r'>=\-?(\d+|\d+\.\d+)$|<=\-?(\d+|\d+\.\d+)$|=\-?(\d+|\d+\.\d+)$', constraint)
         # If the type of the constraint is '>=' or '<=' slice
         # the first 2 elements of the string to get the constant.
         if match.group()[0] == '>' or match.group()[0] == '<':
-            b.append(int(match.group()[2:]))
+            try:
+                b.append(int(match.group()[2:]))
+            except ValueError:
+                b.append(float(match.group()[2:]))
         # Else slice only the first element of the string to get the constant.
         else:
-            b.append(int(match.group()[1:]))
+            try:
+                b.append(int(match.group()[1:]))
+            except ValueError:
+                b.append(float(match.group()[1:]))
 
     return b
 
