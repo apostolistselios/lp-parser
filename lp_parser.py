@@ -99,7 +99,6 @@ def get_n(data):
 
     for line in data:
         x_factors = re.findall(r'x\d+', line)
-        print(x_factors)
         for factor in x_factors:
             pointer = factor.strip('x')
             if int(pointer) > max_pointer:
@@ -116,10 +115,7 @@ def get_lp_type(obj_fun):
     """
 
     match = minmax_regex.match(obj_fun)
-    if match.group() == 'min':
-        return -1
-    else:
-        return 1
+    return -1 if match.group() == 'min' else 1
 
 
 def get_st_len(st_line):
@@ -239,7 +235,7 @@ def save_matrixes_to_file(minmax, c, A, b, eqin, output_file):
     Save the extracted matrixes to a file called lp_matrixes.txt.
     """
 
-    print(r'Saving to ' + output_file + '...')
+    print(r'Saving to ' + output_file)
 
     with open(output_file, 'w') as file:
         if minmax == 1:
@@ -253,7 +249,7 @@ def save_matrixes_to_file(minmax, c, A, b, eqin, output_file):
         for i in range(1, len(A)):
             print(f'\t{A[i]}', file=file)
 
-        print('eqin =', eqin, file=file)
+        print('Eqin =', eqin, file=file)
         print('b =', b, file=file)
 
     print('Done!')
@@ -272,11 +268,12 @@ def main():
         data = load_linear_problem(input_file)
 
     check_format(data)
+    print('Correct format!')
 
     # Number of x variables in the problem
     n = get_n(data)
 
-    print('Extracting...')
+    print('Extracting from ' + input_file)
 
     # 1 -> maximize lp / -1 -> minimize lp
     minmax = get_lp_type(data[0])
