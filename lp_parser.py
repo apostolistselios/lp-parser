@@ -36,7 +36,7 @@ def parse_arguments():
     return args.input, args.output
 
 
-def load_linear_problem(input_file='lp.txt'):
+def load_linear_problem(input_file):
     """ Return data
 
     Loads the linear problem from a file and return its data stripped,
@@ -44,7 +44,7 @@ def load_linear_problem(input_file='lp.txt'):
     """
 
     data = []
-    with open(r'.\txt_files\\' + input_file, 'r') as file:
+    with open(input_file, 'r') as file:
         raw_data = file.readlines()
         for line in raw_data:
             if line != '\n':
@@ -247,14 +247,14 @@ def extract_bconstants(constraints):
     return b
 
 
-def save_matrixes_to_file(minmax, c, A, b, eqin, output_file='lp_matrixes.txt'):
+def save_matrixes_to_file(minmax, c, A, b, eqin, output_file):
     """
     Save the extracted matrixes to a file called lp_matrixes.txt.
     """
 
-    print(r'Saving to .\files\\' + output_file + '...')
+    print(r'Saving to ' + output_file + '...')
 
-    with open(r'.\txt_files\\' + output_file, 'w') as file:
+    with open(output_file, 'w') as file:
         if minmax == 1:
             file.write('max ')
         else:
@@ -281,7 +281,8 @@ def main():
     if input_file != None:
         data = load_linear_problem(input_file)
     else:
-        data = load_linear_problem()
+        input_file = r'.\input_files\lp.txt'
+        data = load_linear_problem(input_file)
 
     check_format(data)
 
@@ -314,7 +315,8 @@ def main():
     if output_file != None:
         save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
     else:
-        save_matrixes_to_file(minmax, c, A, b, Eqin)
+        output_file = r'.\output_files\lp_matrixes.txt'
+        save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
 
 
 if __name__ == '__main__':
