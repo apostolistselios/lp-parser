@@ -11,11 +11,13 @@ import argparse
 
 # REGULAR EXPRESSIONS
 minmax_regex = re.compile(r'\A(min|max)', re.I)
-objective_function_regex = re.compile(
-    r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+$', re.I)
 st_regex = re.compile(r'\A(st|s\.t\.|subjectto)', re.I)
-tech_contraints_regex = re.compile(
-    r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+(>=|<=|=)\-?(\d+|\d+\.\d+)$', re.I)
+
+obj_fun_pattern = r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+$'
+objective_function_regex = re.compile(obj_fun_pattern, re.I)
+
+tech_constraints_pattern = r'((\-|\+)?(\d*|\d+\.\d+)?x\d+)((\-|\+)(\d*|\d+\.\d+)?x\d+)+(>=|<=|=)\-?(\d+|\d+\.\d+)$'
+tech_contraints_regex = re.compile(tech_constraints_pattern, re.I)
 
 
 def parse_arguments():
@@ -55,6 +57,33 @@ def load_linear_problem(input_file):
     return data
 
 
+def check_for_duplicates(lp):
+    """ Checks for duplicate x variables in the same line.
+    Raises Exception if it finds a duplicate.
+    """
+
+    pattern = r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)'
+
+    for line in lp:
+        if minmax_regex.match(line):
+            x_factors = re.findall(pattern, line[3:])
+        else:
+            x_factors = re.findall(pattern, line)
+
+        prev_pointer = -1
+        for factor in x_factors:
+            _, _, pointer = factor
+
+            try:
+                if int(pointer) == prev_pointer:
+                    raise Exception(f'ERROR: Duplicate x in: {line}')
+            except Exception as e:
+                print(e)
+                exit(1)
+
+            prev_pointer = int(pointer)
+
+
 def check_format(data):
     """ Checks the format of the linear problem and raises Exceptions
     if any errors occur.
@@ -83,6 +112,8 @@ def check_format(data):
             elif not tech_contraints_regex.match(constraint):
                 raise Exception(
                     f'ERROR: Constraint -> "{constraint}" is not valid\nTry this form: 3x1 + 3x2 >= 2')
+
+        check_for_duplicates(data)
 
     except Exception as e:
         print(e)
@@ -141,11 +172,12 @@ def extract_factors(linear_eq, n):
     of a linear equation.
     """
 
-    # A list with tuples containing the sign and factor of each x.
-    # e.g. [('', '23.1'), ('-', '0'), ('+', '23'), ('-', '10')]
-    x_factors = re.findall(r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)', linear_eq)
+    # A list with tuples containing the sign, factor and the pointer of each x.
+    # e.g. [('', '5.15', '2'), ('-', '', '4')]
+    pattern = r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)'
+    x_factors = re.findall(pattern, linear_eq)
 
-    # Initialize factors with a list with n None elements
+    # Initialize factors with a list with n 0 elements.
     factors = [0 for _ in range(n)]
 
     # Iterate every tuple in x_factors.
@@ -185,20 +217,18 @@ def extract_constraints(constraints):
     Eqin is a list containing the type of the constraints e.g. <= .
     """
 
-    eqin = []
+    Eqin = []
 
-    # Iterate over the constraints.
     for constraint in constraints:
-        # Constraint type is a match object containing the type of the constraint.
-        c_type = re.search(r'<=|>=|=', constraint)
-        if c_type.group() == '<=':
-            eqin.append(-1)
-        elif c_type.group() == '>=':
-            eqin.append(1)
+        match = re.search(r'<=|>=|=', constraint)
+        if match.group() == '<=':
+            Eqin.append(-1)
+        elif match.group() == '>=':
+            Eqin.append(1)
         else:
-            eqin.append(0)
+            Eqin.append(0)
 
-    return eqin
+    return Eqin
 
 
 def extract_bconstants(constraints):
@@ -208,11 +238,11 @@ def extract_bconstants(constraints):
     """
 
     b = []
+    pattern = r'>=\-?(\d+|\d+\.\d+)$|<=\-?(\d+|\d+\.\d+)$|=\-?(\d+|\d+\.\d+)$'
 
     # Iterate over the constraints
     for constraint in constraints:
-        match = re.search(
-            r'>=\-?(\d+|\d+\.\d+)$|<=\-?(\d+|\d+\.\d+)$|=\-?(\d+|\d+\.\d+)$', constraint)
+        match = re.search(pattern, constraint)
         # If the type of the constraint is '>=' or '<=' slice
         # the first 2 elements of the string to get the constant.
         if match.group()[0] == '>' or match.group()[0] == '<':
@@ -270,13 +300,13 @@ def main():
     check_format(data)
     print('Correct format!')
 
+    # 1 -> maximize lp / -1 -> minimize lp
+    minmax = get_lp_type(data[0])
+
     # Number of x variables in the problem
     n = get_n(data)
 
     print('Extracting from ' + input_file)
-
-    # 1 -> maximize lp / -1 -> minimize lp
-    minmax = get_lp_type(data[0])
 
     # c: factors of the objective function
     c = extract_factors(data[0][3:], n)
@@ -284,11 +314,7 @@ def main():
     # A: matrix with the factors of the constraints
     A = []
     for constraint in data[1:]:
-        if st_regex.match(constraint):
-            st_len = get_st_len(constraint)
-            A.append(extract_factors(constraint[st_len:], n))
-        else:
-            A.append(extract_factors(constraint, n))
+        A.append(extract_factors(constraint, n))
 
     # Eqin: constraints:-1 (<=), 1 (>=), 0 (=)
     Eqin = extract_constraints(data[1:])
@@ -301,6 +327,8 @@ def main():
     else:
         output_file = r'.\output_files\lp_matrixes.txt'
         save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
+
+    print(data)
 
 
 if __name__ == '__main__':
