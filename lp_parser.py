@@ -8,7 +8,6 @@ import re
 import os
 import argparse
 
-
 # REGULAR EXPRESSIONS
 minmax_regex = re.compile(r'\A(min|max)', re.I)
 st_regex = re.compile(r'\A(st|s\.t\.|subjectto)', re.I)
@@ -61,7 +60,6 @@ def check_for_duplicates(lp):
     """ Checks for duplicate x variables in the same line.
     Raises Exception if it finds a duplicate.
     """
-
     pattern = r'(\-|\+)?(\d+|\d+\.\d+)?x(\d+)'
 
     for line in lp:
@@ -291,7 +289,7 @@ def main():
     # Parsing command line arguments.
     input_file, output_file = parse_arguments()
 
-    if input_file != None:
+    if input_file is not None:
         data = load_linear_problem(input_file)
     else:
         input_file = r'.\input_files\lp.txt'
@@ -322,7 +320,7 @@ def main():
     # b: right hand side of the constraints
     b = extract_bconstants(data[1:])
 
-    if output_file != None:
+    if output_file is not None:
         save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
     else:
         output_file = r'.\output_files\lp_matrixes.txt'
