@@ -27,10 +27,10 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser(
         description='A script that extracts the matrixes of a linear problem.')
-    parser.add_argument('-i', '--input', type=str,
-                        help='Name of the input file.')
-    parser.add_argument('-o', '--output', type=str,
-                        help='Name of the output file.')
+    parser.add_argument('-i', '--input', type=str, default=r'./lp_files/lp.txt',
+                        help='Name of the input file. Default="./lp_files/lp.txt"')
+    parser.add_argument('-o', '--output', type=str, default=r'./lp_files/output_matrixes.txt',
+                        help='Name of the output file. Default="./lp_files/output_matrixes.txt"')
 
     args = parser.parse_args()
 
@@ -280,8 +280,6 @@ def save_matrixes_to_file(minmax, c, A, b, eqin, output_file):
         print('Eqin =', eqin, file=file)
         print('b =', b, file=file)
 
-    print('Done!')
-
 
 def main():
     os.system('cls' if os.name == 'nt' else 'clear')  # clears the terminal
@@ -289,12 +287,7 @@ def main():
     # Parsing command line arguments.
     input_file, output_file = parse_arguments()
 
-    if input_file is not None:
-        data = load_linear_problem(input_file)
-    else:
-        input_file = r'.\input_files\lp.txt'
-        data = load_linear_problem(input_file)
-
+    data = load_linear_problem(input_file)
     check_format(data)
     print('Correct format!')
 
@@ -320,13 +313,7 @@ def main():
     # b: right hand side of the constraints
     b = extract_bconstants(data[1:])
 
-    if output_file is not None:
-        save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
-    else:
-        output_file = r'.\output_files\lp_matrixes.txt'
-        save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
-
-    print(data)
+    save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
 
 
 if __name__ == '__main__':
