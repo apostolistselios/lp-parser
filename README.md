@@ -47,11 +47,11 @@ The Linear Problem should be written in a txt file like the example below.
 
     Takes 3 command line arguments:
     
-    -`-i`/`--input`: The name of the input file. Default=./lp_files/lp.txt
+    - `-i`/`--input`: The name of the input file. Default=./lp_files/lp.txt
     
-    -`-o`/`--output`: The name of the output file. Default=./lp_files/output_dual.txt
+    - `-o`/`--output`: The name of the output file. Default=./lp_files/output_dual.txt
     
-    -`-p`/`--parsed`: If this command line argument is True the input file is parsed by the lp_parser.py so it contains the matrices of the Primal L.P.. If it's False the input file contains the Primal L.P. in the format shown above. Default=False.
+    - `-p`/`--parsed`: If this command line argument is True the input file is parsed by the lp_parser.py so it contains the matrices of the Primal L.P.. If it's False the input file contains the Primal L.P. in the format shown above. Default=False.
 
     To run the dual_converter script run the following command in your terminal:
     
