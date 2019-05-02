@@ -23,7 +23,9 @@ The Linear Problem should be written in a txt file like the example below.
 ### Running the scripts
 
 - lp_parser.py
+
     Takes 2 command line arguments:
+    
     - `-i`/`--input`: The name of the input file. Default=./lp_files/lp.txt
     
     - `-o`/`--output`: The name of the output file. Default=./lp_files/output_matrices.txt
@@ -42,7 +44,9 @@ The Linear Problem should be written in a txt file like the example below.
 
 
 - dual_converter.py
+
     Takes 3 command line arguments:
+    
     -`-i`/`--input`: The name of the input file. Default=./lp_files/lp.txt
     
     -`-o`/`--output`: The name of the output file. Default=./lp_files/output_dual.txt
