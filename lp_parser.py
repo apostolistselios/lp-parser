@@ -26,11 +26,11 @@ def parse_arguments():
     """
 
     parser = argparse.ArgumentParser(
-        description='A script that extracts the matrixes of a linear problem.')
+        description='A script that extracts the matrices of a linear problem.')
     parser.add_argument('-i', '--input', type=str, default=r'./lp_files/lp.txt',
                         help='Name of the input file. Default="./lp_files/lp.txt"')
-    parser.add_argument('-o', '--output', type=str, default=r'./lp_files/output_matrixes.txt',
-                        help='Name of the output file. Default="./lp_files/output_matrixes.txt"')
+    parser.add_argument('-o', '--output', type=str, default=r'./lp_files/output_matrices.txt',
+                        help='Name of the output file. Default="./lp_files/output_matrices.txt"')
 
     args = parser.parse_args()
 
@@ -258,9 +258,9 @@ def extract_bconstants(constraints):
     return b
 
 
-def save_matrixes_to_file(minmax, c, A, b, eqin, output_file):
+def save_matrices_to_file(minmax, c, A, b, eqin, output_file):
     """
-    Save the extracted matrixes to a file called lp_matrixes.txt.
+    Save the extracted matrices to a file called lp_matrices.txt.
     """
 
     print(r'Saving to ' + output_file)
@@ -313,7 +313,7 @@ def main():
     # b: right hand side of the constraints
     b = extract_bconstants(data[1:])
 
-    save_matrixes_to_file(minmax, c, A, b, Eqin, output_file)
+    save_matrices_to_file(minmax, c, A, b, Eqin, output_file)
 
 
 if __name__ == '__main__':

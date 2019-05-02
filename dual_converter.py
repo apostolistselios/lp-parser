@@ -1,3 +1,9 @@
+'''
+Created on April 29, 2019
+
+@author: Apostolis Tselios
+'''
+
 import os
 import re
 import argparse
@@ -14,13 +20,13 @@ def parse_arguments():
     """
 
     parser = argparse.ArgumentParser(
-        description='A script that turns the matrixes of a Primal Linear Problem to the matrixes of a its Dual Linear Problem.')
+        description='A script that turns the matrices of a Primal Linear Problem to the matrices of a its Dual Linear Problem.')
     parser.add_argument('-i', '--input', type=str, default=r'./lp_files/lp.txt',
                         help='Name of the input file. Default="./lp_files/lp.txt"')
     parser.add_argument('-o', '--output', type=str, default=r'./lp_files/output_dual.txt',
                         help='Name of the output file. Default="./lp_files/output_dual.txt"')
     parser.add_argument('-p', '--parsed', type=bool, default=False,
-                        help='Is the input file formed in matrixes or is it the raw LP?(True/False) Default=False.')
+                        help='Is the input file formed in matrices or is it the raw LP?(True/False) Default=False.')
 
     args = parser.parse_args()
 
@@ -28,6 +34,11 @@ def parse_arguments():
 
 
 def load_data(input):
+    """Reads the L.P. from a file and returns the data with no spaces.
+
+    param: input
+    return: data
+    """
 
     with open(input, 'r') as f:
         raw_data = f.readlines()
@@ -39,6 +50,7 @@ def load_data(input):
 def parse_lp_type(type):
     """Returns the type of the linear problem.
 
+    param: type
     return: 1 or -1
     """
     return 1 if type == 'max' else -1
@@ -61,8 +73,8 @@ def parse_elements(line):
     return elements
 
 
-def parse_matrixes(data):
-    """Parses the matrixes of a Primal Linear Problem from a string.
+def parse_matrices(data):
+    """Parses the matrices of a Primal Linear Problem from a string.
 
     params: data
     return: primal_type, c, A, b, Eqin
@@ -77,40 +89,43 @@ def parse_matrixes(data):
     return primal_type, c, A, b, Eqin
 
 
-def create_dual(primal_type, c, A, b, Eqin):
+def create_dual(primal_type, A, len_b, Eqin):
     """Creates the Dual L.P. of the the Primal L.P. given as input
-    and returns the matrixes of the Dual L.P.
+    and returns the matrices of the Dual L.P.
 
-    params: primal_type, c, A, b, Eqin
-    return: dual_type, dual_c, dual_A, dual_b, dual_eqin
+    params: primal_type,A, len_b, Eqin
+    return: dual_type, dual_A, dual_eqin
     """
 
     dual_type = -1 if primal_type == 1 else 1
-    dual_b = c
-    dual_c = b
     dual_A = np.transpose(np.array(A))
 
     if dual_type == -1:
         # If the dual_type is -1 (min) the primal was 1 (max) so for
         # positive variables we have >= (1) constraints.
-        dual_eqin = [1 for _ in range(len(b))]
+        dual_eqin = [1 for _ in range(len_b)]
     else:
         # If the dual_type is 1 (max) the primal was -1 (min) so for
         # positive variables we have <= (-1) constraints.
-        dual_eqin = [-1 for _ in range(len(b))]
+        dual_eqin = [-1 for _ in range(len_b)]
 
-    return dual_type, dual_c, dual_A, dual_b, dual_eqin
+    return dual_type, dual_A, dual_eqin
 
 
-def save_dual_problem(dual_type, dual_c, dual_A, dual_b, dual_eqin, output):
+def save_dual_problem(dual_type, c, dual_A, b, dual_eqin, output):
+    """Saves the matrices of the Dual L.P. in a file.
+
+    params: dual_type, c, dual_A, b, dual_eqin, output
+    """
+
     print(f'Saving to {output}...')
     with open(output, 'w') as f:
         f.write('min ') if dual_type == -1 else f.write('max ')
 
-        print(f'Dual_c = {dual_c}', file=f)
-        print(f'Dual_A = {dual_A}', file=f)
+        print(f'b = {b}', file=f)
+        print(f'A_transpose = {dual_A}', file=f)
         print(f'Dual_Eqin = {dual_eqin}', file=f)
-        print(f'Dual_b = {dual_b}', file=f)
+        print(f'c = {c}', file=f)
 
 
 def main():
@@ -121,17 +136,16 @@ def main():
         data = load_data(input)
     else:
         os.system(
-            f'python lp_parser.py -i {input} -o ./lp_files/output_matrixes.txt')
-        parsed_file = r'./lp_files/output_matrixes.txt'
+            f'python lp_parser.py -i {input} -o ./lp_files/output_matrices.txt')
+        parsed_file = r'./lp_files/output_matrices.txt'
         data = load_data(parsed_file)
 
     print('Creating Dual Linear Problem...')
-    primal_type, c, A, b, Eqin = parse_matrixes(data)
+    primal_type, c, A, b, Eqin = parse_matrices(data)
 
-    dual_type, dual_c, dual_A, dual_b, dual_eqin = create_dual(
-        primal_type, c, A, b, Eqin)
+    dual_type, dual_A, dual_eqin = create_dual(primal_type, A, len(b), Eqin)
 
-    save_dual_problem(dual_type, dual_c, dual_A, dual_b, dual_eqin, output)
+    save_dual_problem(dual_type, c, dual_A, b, dual_eqin, output)
 
 
 if __name__ == '__main__':
